@@ -95,7 +95,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 </div></div>
 <div id="app" class="hidden">
 <aside id="side"><h3 id="who" style="margin-bottom:4px"></h3><small id="rl" style="color:var(--g)"></small><hr style="margin:10px 0;border-color:var(--l)"><nav id="nav"></nav>
-<button class="b r" style="width:100%;margin-top:12px" data-a="logout">خروج</button></aside><div id="shade" data-a="menu"></div>
+<button class="b o" style="width:100%;margin-bottom:8px" data-a="lock"><i class="fa-solid fa-lock"></i> قفل مؤقت</button><button class="b r" style="width:100%;margin-top:12px" data-a="logout">خروج</button></aside><div id="shade" data-a="menu"></div>
 <div id="main"><div id="bar"><button id="mb" class="b o" data-a="menu"><i class="fa-solid fa-bars"></i></button><div id="hero"><div><small>مركز خطوة المستقبل للعلاج الطبيعي</small><h2 id="ht">أهلاً بك</h2><span id="hn"></span></div><div id="hc"><b id="tm"></b><small id="dt2"></small></div></div><button class="b o" data-a="xl" title="تصدير الجدول إلى Excel"><i class="fa-solid fa-file-excel"></i></button></div><div id="scr"></div><footer class="cp">© 2026 مركز خطوة المستقبل — جميع الحقوق محفوظة<br>الإصدار <span data-ver></span></footer></div>
 </div>
 <dialog id="dlg"></dialog>
@@ -103,7 +103,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import{getAuth,reauthenticateWithCredential,EmailAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,deleteDoc,doc,updateDoc,setDoc,getDoc,onSnapshot,writeBatch,query,where,getDocs,orderBy,limit}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 const CFG={apiKey:"AIzaSyCnpbMGZCteZ9w_i5Rx0sKynle_qz0p2tk",authDomain:"mrkzalalgaltbay.firebaseapp.com",projectId:"mrkzalalgaltbay",storageBucket:"mrkzalalgaltbay.firebasestorage.app",messagingSenderId:"345480027808",appId:"1:345480027808:web:b8ca2b27761d3b912733c5"};const app=initializeApp(CFG);const sec=getAuth(initializeApp(CFG,'sec'));
 const auth=getAuth(app),db=getFirestore(app);
@@ -329,9 +329,27 @@ function sOpen(id){const s=id?D.staff.find(x=>x.id===id):null,p=id?(D.payroll.fi
  if(s){[['fn','name'],['fdept','dept'],['fjt','jobTitle'],['fbr','branch'],['fph','phone'],['fjd','joinDate']].forEach(([k,f])=>set(k,s[f]));
   set('ftit',s.spec!==undefined?s.spec:(SPEC().includes(s.title)?s.title:''));if(!s.jobTitle&&s.title&&!SPEC().includes(s.title))set('fjt',s.title);if(!s.dept)set('fdept','doctor')}
  PAYMAP.forEach(([k,f])=>set(k,p[f]));$('dlg').showModal()}
-const slotKey=(d,dt,t)=>{const m=String(t||'').match(/(\d{1,2}):(\d{2})/);let h=m?+m[1]:0;if(/عصر|مساء/.test(t||'')&&h<12)h+=12;return[d,dt,String(h).padStart(2,'0')+(m?m[2]:'00')].join('_').replace(/[\/\s]+/g,'-')};
-let idleT;const idleReset=()=>{clearTimeout(idleT);if(auth.currentUser)idleT=setTimeout(()=>{toast('انتهت الجلسة لعدم النشاط',0);signOut(auth)},30*60*1000)};
+const t24=t=>{const m=String(t||'').match(/(\d{1,2}):(\d{2})/);let h=m?+m[1]:0;if(/عصر|مساء/.test(t||'')&&h<12)h+=12;return String(h).padStart(2,'0')+(m?m[2]:'00')};
+const svcKey=s=>String(s||'').replace('جلسة','').split(/\s+/).map(w=>w.replace(/^و/,'')).filter(Boolean).sort().join('-');
+const slotKey=(d,dt,t)=>[d,dt,t24(t)].join('_').replace(/[\/\s]+/g,'-');
+const childKeys=(f,dt,t,s)=>[`c-${f}-${dt}-s-${svcKey(s)}`,`c-${f}-${dt}-t-${t24(t)}`];
+const LKEY='khatwa_lock',SKEY='khatwa_ss',MAXH=8,IDLE=10*60*1000;
+let idleT;const idleReset=()=>{clearTimeout(idleT);if(auth.currentUser&&!$('lockscr'))idleT=setTimeout(()=>lockUI(true),IDLE)};
 ['click','keydown','touchstart','mousemove'].forEach(ev=>document.addEventListener(ev,idleReset,{passive:true}));
+function lockUI(show){let d=$('lockscr');
+ if(!show){if(d)d.remove();try{localStorage.removeItem(LKEY)}catch(_){}idleReset();return}
+ try{localStorage.setItem(LKEY,'1')}catch(_){}clearTimeout(idleT);
+ if(!d){d=document.createElement('div');d.id='lockscr';d.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(160deg,var(--bg),#bae6fd)';document.body.append(d)}
+ const nm=()=>E(({doctor:'الطبيب',manager:'المدير'}[U.role]||'')+' '+(U.name||auth.currentUser?.email||''));
+ d.innerHTML=`<div class="card" style="width:100%;max-width:380px;text-align:center"><div style="width:64px;height:64px;margin:0 auto 10px;border-radius:18px;background:linear-gradient(135deg,#0284c7,#0d9488);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px"><i class="fa-solid fa-lock"></i></div><h2 id="lknm" style="margin-bottom:6px">أهلاً بك ${nm()}</h2><small style="color:var(--g)">الشاشة مقفلة مؤقتاً، أدخل كلمة المرور للمتابعة</small><label style="margin-top:14px;text-align:right">كلمة المرور<input id="lkpw" type="password" autocomplete="current-password"></label><button class="b" style="width:100%" data-a="unlock">فتح</button><button class="b o" style="width:100%;margin-top:6px" data-a="lkout">تبديل المستخدم</button></div>`;
+ $('lkpw').addEventListener('keydown',e=>{if(e.key==='Enter')unlockNow()});setTimeout(()=>{$('lkpw')?.focus();const h=$('lknm');if(h)h.textContent='أهلاً بك '+nm().replace(/&amp;/g,'&')},1500)}
+async function unlockNow(){const p=$('lkpw')?.value;if(!p)return;try{await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,p));lockUI(false)}catch(e){toast('كلمة المرور غير صحيحة',0)}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='lock')lockUI(true);if(b.dataset.a==='unlock')unlockNow();if(b.dataset.a==='lkout'){lockUI(false);signOut(auth)}});
+const sessCheck=()=>{const u=auth.currentUser;if(!u)return;let ss=null;try{ss=JSON.parse(localStorage.getItem(SKEY)||'null')}catch(_){}
+ if(!ss||ss.uid!==u.uid){ss={uid:u.uid,start:Date.now()};try{localStorage.setItem(SKEY,JSON.stringify(ss))}catch(_){}}
+ if(Date.now()-ss.start>MAXH*3600*1000){toast('انتهت مدة الجلسة (8 ساعات)، سجّل الدخول من جديد',0);signOut(auth)}};
+onAuthStateChanged(auth,u=>{if(!u){try{localStorage.removeItem(SKEY);localStorage.removeItem(LKEY)}catch(_){}const d=$('lockscr');if(d)d.remove();return}sessCheck();if(localStorage.getItem(LKEY)==='1')lockUI(true);else idleReset()});
+setInterval(sessCheck,60000);
 const ask=(m,ok='تأكيد')=>new Promise(r=>{const d=$('cfm');d.innerHTML=`<p style="font-weight:700;margin-bottom:14px">${E(m)}</p><button class="b r" id=cfy>${E(ok)}</button><button class="b o" id=cfn>إلغاء</button>`;const f=v=>{d.close();r(v)};$('cfy').onclick=()=>f(true);$('cfn').onclick=()=>f(false);d.oncancel=()=>r(false);d.showModal()});
 const askVal=(m,v='')=>new Promise(r=>{const d=$('cfm');d.innerHTML=`<p style="font-weight:700">${E(m)}</p><input id=cfv type=number inputmode=decimal value="${E(v)}" style="margin:8px 0 14px"><button class="b gr" id=cfy>حفظ</button><button class="b o" id=cfn>إلغاء</button>`;const f=x=>{d.close();r(x)};$('cfy').onclick=()=>f($('cfv').value);$('cfn').onclick=()=>f(null);d.oncancel=()=>r(null);d.showModal();$('cfv').focus()});
 const del=async(c,id,m)=>await ask(m,'حذف')&&run(deleteDoc(doc(db,c,id)),'تم الحذف');
@@ -480,17 +498,21 @@ const A={
  eye(){const p=$('pw'),h=p.type==='password';p.type=h?'text':'password';document.querySelector('.eye i').className='fa-solid fa-eye'+(h?'-slash':'')},
  async logout(){await logAct('تسجيل خروج','');try{sessionStorage.removeItem('khatwa_lg')}catch{}signOut(auth)},menu(){$('side').classList.toggle('open')},go,
  attend:id=>sub('appointments',id,{status:'attended',attendedAt:new Date().toISOString()}),
- noshow(id){const a=D.appointments.find(x=>x.id===id);if(!a)return;run((async()=>{const b=writeBatch(db);b.update(doc(db,'appointments',id),{status:'no_show'});if(a.slot)b.delete(doc(db,'slots',slotKey(a.doctor,a.date,a.time)));await b.commit()})(),'تم تسجيل التخلّف')},
+ noshow(id){const a=D.appointments.find(x=>x.id===id);if(!a)return;run((async()=>{const b=writeBatch(db);b.update(doc(db,'appointments',id),{status:'no_show'});if(a.slot)b.delete(doc(db,'slots',slotKey(a.doctor,a.date,a.time)));if(a.cslot)childKeys(a.fileNo,a.date,a.time,a.service).forEach(k=>b.delete(doc(db,'slots',k)));await b.commit()})(),'تم تسجيل التخلّف')},
  find(){const f=val('fno').toLowerCase();child=D.children.find(c=>String(c.fileNo||'').toLowerCase()===f)||null;
   $('fc').innerHTML=child?`<div class=card><b>${E(child.name)}</b><br><small>التشخيص: ${V(child.diagnosis)} | ولي الأمر: ${V(child.momName)}</small></div>`:'';if(!child)toast('لا يوجد طفل بهذا الرقم',0)},
  async book(){const doctor=val('bd'),date=val('bdt'),time=val('bt');
   if(!child)return toast('اجلب بيانات الطفل أولاً',0);if(!doctor||!date)return toast('اختر الأخصائي والتاريخ',0);
   if(date<today())return toast('لا يمكن الحجز بتاريخ سابق',0);
   if(D.appointments.some(a=>a.doctor===doctor&&a.date===date&&a.time===time&&a.status!=='no_show'))return toast('الأخصائي محجوز في هذا الوقت',0);
+  const act=D.appointments.filter(a=>a.fileNo===child.fileNo&&(a.date||a.day)===date&&a.status!=='no_show');
+  if(act.some(a=>t24(a.time)===t24(time)))return toast('للطفل موعد آخر في نفس الوقت',0);
+  if(act.some(a=>svcKey(a.service)===svcKey(val('bs'))))return toast('للطفل موعد في نفس التخصص في هذا اليوم',0);
   const ref=doc(collection(db,'appointments')),sk=slotKey(doctor,date,time),now=new Date().toISOString();
   if(await run((async()=>{const b=writeBatch(db);
    b.set(doc(db,'slots',sk),{doctor,date,time,apptId:ref.id,parentUid:child.parentUid||'',createdAt:now});
-   b.set(ref,{childName:child.name,fileNo:child.fileNo,idno:child.idno||'',diagnosis:child.diagnosis||'',history:child.history||'',cstatus:child.status||'',gender:child.gender||'',dob:child.dob||'',service:val('bs'),branch:val('bb'),doctor,date,time,parentUid:child.parentUid||'',slot:true,status:'pending',createdBy:U.name,createdAt:new Date().toISOString()});
+   childKeys(child.fileNo,date,time,val('bs')).forEach(k=>b.set(doc(db,'slots',k),{kind:'child',fileNo:child.fileNo,date,apptId:ref.id,parentUid:child.parentUid||'',createdAt:now}));
+   b.set(ref,{childName:child.name,fileNo:child.fileNo,idno:child.idno||'',diagnosis:child.diagnosis||'',history:child.history||'',cstatus:child.status||'',gender:child.gender||'',dob:child.dob||'',service:val('bs'),branch:val('bb'),doctor,date,time,parentUid:child.parentUid||'',slot:true,cslot:true,status:'pending',createdBy:U.name,createdAt:new Date().toISOString()});
    await b.commit()})().catch(e=>{throw e.code==='permission-denied'?{code:'الموعد محجوز مسبقاً لهذا الأخصائي'}:e}),'تم حفظ الموعد'))go('checkin')},
  async create(){const mn=val('mn'),mp=val('mp').replace(/\D/g,''),cn=val('cn'),ci=val('ci'),dob=val('cd'),dx=val('cx');
   if(!mn||!mp||!cn||!dob||!dx)return toast('أكمل الحقول الأساسية',0);
