@@ -96,7 +96,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 <div id="app" class="hidden">
 <aside id="side"><h3 id="who" style="margin-bottom:4px"></h3><small id="rl" style="color:var(--g)"></small><hr style="margin:10px 0;border-color:var(--l)"><nav id="nav"></nav>
 <button class="b o" style="width:100%;margin-bottom:8px" data-a="lock"><i class="fa-solid fa-lock"></i> قفل مؤقت</button><button class="b r" style="width:100%;margin-top:12px" data-a="logout">خروج</button></aside><div id="shade" data-a="menu"></div>
-<div id="main"><div id="bar"><button id="mb" class="b o" data-a="menu"><i class="fa-solid fa-bars"></i></button><div id="hero"><div><small>مركز خطوة المستقبل للعلاج الطبيعي</small><h2 id="ht">أهلاً بك</h2><span id="hn"></span></div><div id="hc"><b id="tm"></b><small id="dt2"></small></div></div><button class="b o" data-a="xl" title="تصدير الجدول إلى Excel"><i class="fa-solid fa-file-excel"></i></button></div><div id="scr"></div><footer class="cp">© 2026 مركز خطوة المستقبل — جميع الحقوق محفوظة<br>الإصدار <span data-ver></span></footer></div>
+<div id="main"><div id="bar"><button id="mb" class="b o" data-a="menu"><i class="fa-solid fa-bars"></i></button><div id="hero"><div><small>مركز خطوة المستقبل للعلاج الطبيعي</small><h2 id="ht">أهلاً بك</h2><span id="hn"></span></div><div id="hc"><b id="tm"></b><small id="dt2"></small></div></div><button class="b o" id="bell" data-a="bell" title="الإشعارات" style="position:relative"><i class="fa-solid fa-bell"></i><span id="bellc" style="display:none;position:absolute;top:-4px;left:-4px;min-width:16px;height:16px;border-radius:8px;background:#e11d48;color:#fff;font-size:10px;align-items:center;justify-content:center;padding:0 3px"></span></button><button class="b o" data-a="xl" title="تصدير الجدول إلى Excel"><i class="fa-solid fa-file-excel"></i></button></div><div id="scr"></div><footer class="cp">© 2026 مركز خطوة المستقبل — جميع الحقوق محفوظة<br>الإصدار <span data-ver></span></footer></div>
 </div>
 <dialog id="dlg"></dialog>
 <dialog id="cfm"></dialog>
@@ -129,7 +129,7 @@ const ST={pending:'بانتظار الحضور',attended:'حاضر',completed:'�
 const TIMES=O(Array.from({length:11},(_,i)=>String(i+8).padStart(2,'0')+':00'));
 
 /* ---------- الحالة ---------- */
-const D={children:[],appointments:[],staff:[],reports:[],attendance:[],invoices:[],specialties:[],branches:[],payroll:[],inventory:[],inquiries:[],packages:[],subscriptions:[],messages:[],activity_logs:[],moms_users:[],users:[]};
+const D={children:[],appointments:[],staff:[],reports:[],attendance:[],invoices:[],specialties:[],branches:[],payroll:[],inventory:[],inquiries:[],packages:[],subscriptions:[],messages:[],activity_logs:[],moms_users:[],users:[],leaves:[],off_days:[]};
 const U={};let cur='home',unsubs=[],PERM=null,af='pending',child=null;
 const DEF={manager:['home','checkin','queue','newfile','appr','att','fin','children','staff','hr','acc','store','crm','specialties','branches','pkgs','subs','msgs','logs','archive','dataio','remind','kpi','backup'],accountant:['acc','fin','kpi','msgs','archive'],hr:['hr','staff','att','msgs','archive'],store:['store','msgs','archive'],service:['crm','msgs','archive'],doctor:['doctor','msgs','archive'],reception:['home','checkin','queue','booking','remind','subs','newfile','fin','children','msgs','archive']};
 let LC='',PCR=null,SELS=null,FIN={},REM=null;
@@ -350,6 +350,14 @@ const sessCheck=()=>{const u=auth.currentUser;if(!u)return;let ss=null;try{ss=JS
  if(Date.now()-ss.start>MAXH*3600*1000){toast('انتهت مدة الجلسة (8 ساعات)، سجّل الدخول من جديد',0);signOut(auth)}};
 onAuthStateChanged(auth,u=>{if(!u){try{localStorage.removeItem(SKEY);localStorage.removeItem(LKEY)}catch(_){}const d=$('lockscr');if(d)d.remove();return}sessCheck();if(localStorage.getItem(LKEY)==='1')lockUI(true);else idleReset()});
 setInterval(sessCheck,60000);
+const LST={pending:'قيد المراجعة',approved:'تمت الموافقة',rejected:'مرفوض'};
+const NS={list:[],seen:0,key:''};
+function notifRender(){const n=NS.list.filter(x=>Date.parse(x.createdAt)>NS.seen).length,c=$('bellc');if(c){c.textContent=n;c.style.display=n?'flex':'none'}}
+function notifOpen(){let p=$('ntp');if(p){p.remove();return}
+ p=document.createElement('div');p.id='ntp';p.style.cssText='position:fixed;top:64px;left:12px;width:min(92vw,360px);max-height:60vh;overflow:auto;z-index:70;background:var(--c);border:1px solid var(--l);border-radius:14px;padding:12px;box-shadow:0 8px 24px #0003';
+ p.innerHTML='<b>الإشعارات</b>'+(NS.list.length?NS.list.slice(0,30).map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--l)"><b>${E(x.title)}</b><br><small>${E(x.body)}</small><br><small style="color:var(--g)">${E((x.createdAt||'').slice(0,16).replace('T',' '))}</small></div>`).join(''):'<p class=mu>لا توجد إشعارات</p>');
+ document.body.append(p);NS.seen=Date.now();ls(NS.key,String(NS.seen));notifRender()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a="bell"]');if(b)notifOpen();else if(!e.target.closest('#ntp'))$('ntp')?.remove()});
 const ask=(m,ok='تأكيد')=>new Promise(r=>{const d=$('cfm');d.innerHTML=`<p style="font-weight:700;margin-bottom:14px">${E(m)}</p><button class="b r" id=cfy>${E(ok)}</button><button class="b o" id=cfn>إلغاء</button>`;const f=v=>{d.close();r(v)};$('cfy').onclick=()=>f(true);$('cfn').onclick=()=>f(false);d.oncancel=()=>r(false);d.showModal()});
 const askVal=(m,v='')=>new Promise(r=>{const d=$('cfm');d.innerHTML=`<p style="font-weight:700">${E(m)}</p><input id=cfv type=number inputmode=decimal value="${E(v)}" style="margin:8px 0 14px"><button class="b gr" id=cfy>حفظ</button><button class="b o" id=cfn>إلغاء</button>`;const f=x=>{d.close();r(x)};$('cfy').onclick=()=>f($('cfv').value);$('cfn').onclick=()=>f(null);d.oncancel=()=>r(null);d.showModal();$('cfv').focus()});
 const del=async(c,id,m)=>await ask(m,'حذف')&&run(deleteDoc(doc(db,c,id)),'تم الحذف');
@@ -455,6 +463,22 @@ kpi:{n:'مؤشرات الأداء',i:'chart-line',r:()=>'<div class=kp id=kp></d
  $('kb').innerHTML=ms.map(m=>`<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><small style="width:62px">${m}</small><div style="flex:1;background:var(--l);border-radius:8px;overflow:hidden"><i style="display:block;height:18px;width:${(rev[m]||0)*100/mx}%;background:#0369a1"></i></div><b style="min-width:70px;text-align:left">${(rev[m]||0).toLocaleString('en')}</b></div>`).join('');
  const docs=[...new Set(ap.map(a=>a.doctor).filter(Boolean))].sort();
  $('tb').innerHTML=T(['الأخصائي','حضر / أُكملت','تخلّف','نسبة التخلف','متوسط نسبة التطور'],docs.map(d=>{const mine=ap.filter(a=>a.doctor===d),a1=mine.filter(att).length,n1=mine.filter(a=>a.status==='no_show').length,pr=rp.filter(r=>r.doctor===d);return[V(d),a1,n1,(a1+n1)?Math.round(n1*100/(a1+n1))+'%':'—',pr.length?Math.round(pr.reduce((t,r)=>t+r.progress,0)/pr.length)+'%':'—']}),'لا توجد مواعيد')}},
+myschedule:{n:'جدولي',i:'calendar-days',r:()=>'<div id=lv></div><div id=tb></div>',u(){if(!$('tb'))return;
+ const t=today(),tm=new Date(Date.now()+864e5).toLocaleDateString('en-CA',{timeZone:'Asia/Riyadh'}),dn=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+ const mine=D.appointments.filter(a=>(U.role!=='doctor'||a.doctor===U.name)&&(a.date||a.day)>=t&&a.status!=='no_show').sort((a,b)=>((a.date||a.day)+t24(a.time)).localeCompare((b.date||b.day)+t24(b.time)));
+ const g={};mine.forEach(a=>{const d=a.date||a.day;(g[d]=g[d]||[]).push(a)});
+ const lv=D.leaves.filter(x=>x.status==='approved'&&(x.to||x.from)>=t);
+ $('lv').innerHTML=lv.length?`<div class=card style="border-color:#16a34a"><b>إجازات واستئذانات معتمدة قادمة</b><br>${lv.map(x=>`${E(x.type)}: ${V(x.from)}${x.to&&x.to!==x.from?' إلى '+V(x.to):''}`).join('<br>')}</div>`:'';
+ const days=Object.keys(g);
+ $('tb').innerHTML=days.length?days.map(d=>{const lab=d===t?'اليوم':d===tm?'غداً':dn[new Date(d+'T00:00:00').getDay()];return`<div class=card><h3>${lab} — ${V(d)} <small style="color:var(--g)">(${g[d].length} موعد)</small></h3>${T(['الوقت','الطفل','الملف','الخدمة','الحالة'],g[d].map(a=>[V(a.time),V(a.childName),V(a.fileNo),V(a.service),`<span class=tg>${ST[a.status]||'—'}</span>`]))}</div>`}).join(''):'<div class="card mu">لا توجد مواعيد قادمة في جدولك</div>'}},
+leave:{n:'طلب استئذان',i:'door-open',r:()=>`<div class=card style="max-width:620px"><h3>طلب استئذان / إجازة</h3><div class=g2>${S('lt','النوع',O(['استئذان (ساعات)','إجازة (يوم أو أكثر)']))}${I('lf','من تاريخ','date')}${I('lto','إلى تاريخ (للإجازة)','date')}${I('lh1','من الساعة','time')}${I('lh2','إلى الساعة','time')}</div><label>السبب<textarea id=lr rows=2></textarea></label><button class=b data-a=sendleave>إرسال للمدير</button></div><div class=card><h3>طلباتي</h3><div id=tb></div></div>`,u(){if(!$('tb'))return;
+ const r=D.leaves.filter(x=>x.uid===U.uid).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+ $('tb').innerHTML=T(['النوع','من','إلى','الساعات','السبب','الحالة'],r.map(x=>[V(x.type),V(x.from),V(x.to),V(x.h1?x.h1+' – '+x.h2:''),V(x.reason),`<span class=tg>${LST[x.status]||'—'}</span>`]),'لا توجد طلبات')}},
+leaveadm:{n:'طلبات الاستئذان',i:'clipboard-check',r:()=>'<div class=card><h3>طلبات الاستئذان والإجازات</h3><div id=tb></div></div>',u(){if(!$('tb'))return;
+ const r=[...D.leaves].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||(b.createdAt||'').localeCompare(a.createdAt||''));
+ $('tb').innerHTML=T(['الموظف','الدور','النوع','من','إلى','الساعات','السبب','مواعيد متأثرة','الحالة','إجراء'],r.map(x=>{const hit=D.appointments.filter(a=>a.doctor===x.name&&(a.date||a.day)>=x.from&&(a.date||a.day)<=x.to&&a.status!=='no_show').length;
+  return[V(x.name),V(RL[x.role]),V(x.type),V(x.from),V(x.to),V(x.h1?x.h1+' – '+x.h2:''),V(x.reason),hit?`<b style="color:#e11d48">${hit}</b>`:'—',`<span class=tg>${LST[x.status]||'—'}</span>`,x.status==='pending'?B('lvok',x.id,'موافقة','gr')+B('lvno',x.id,'رفض','r'):V(x.decidedBy)]}),'لا توجد طلبات')}},
+notify:{n:'إرسال إشعار',i:'bullhorn',r:()=>`<div class=card style="max-width:620px"><h3>إشعار جديد</h3>${S('nt','إلى',[['all','الجميع'],['doctor','الأطباء'],['reception','الاستقبال'],['manager','المدير'],['accountant','المحاسبة'],['hr','الموارد البشرية'],['store','المخزون'],['service','خدمة العملاء'],['it','IT']])}${I('ntt','العنوان')}<label>النص<textarea id=ntb rows=3></textarea></label><button class=b data-a=sendnotif>إرسال</button></div>`},
 perm:{n:'الصلاحيات (IT)',i:'shield-halved',r:()=>`<div class=card style="max-width:700px"><h3>صلاحيات الأقسام</h3>${S('pr','القسم',[['manager','المدير'],['doctor','الأطباء'],['reception','الاستقبال'],['accountant','المحاسبة'],['hr','الموارد البشرية'],['store','المخزون'],['service','خدمة العملاء']])}<div id=pc class=g2></div><button class=b data-a=saveP>حفظ سحابياً</button></div>
  <div class=card style="max-width:700px"><h3>ربط حساب بدور</h3><small>أنشئ المستخدم في Firebase Authentication ثم انسخ UID هنا.</small><div class=g2 style="margin-top:8px">${I('uu','UID')}${I('un','الاسم (يطابق اسم الأخصائي للأطباء)')}${S('ur','الدور',[['manager','مدير'],['doctor','طبيب'],['reception','استقبال'],['accountant','محاسب'],['hr','موارد بشرية'],['store','مخزون'],['service','خدمة عملاء'],['it','IT']])}</div><button class=b data-a=saveU>حفظ</button></div>`,u(){
  if(!$('pc')||$('pc').dataset.r===$('pr').value)return;const r=$('pr').value;$('pc').dataset.r=r;const p=({...DEF,...PERM})[r]||[];
@@ -462,17 +486,22 @@ perm:{n:'الصلاحيات (IT)',i:'shield-halved',r:()=>`<div class=card style
 };
 
 /* ---------- تنقل ---------- */
-const allowed=()=>U.role==='it'?Object.keys(SC):(({...DEF,...PERM})[U.role]||[]).filter(k=>SC[k]&&k!=='perm');
+const NEW={doctor:['leave'],accountant:['leave'],hr:['leave'],store:['leave'],service:['leave'],reception:['leave'],manager:['leaveadm','notify']};
+const allowed=()=>U.role==='it'?Object.keys(SC):[...new Set([...(U.role==='doctor'?['myschedule']:[]),...(({...DEF,...PERM})[U.role]||[]),...(NEW[U.role]||[])])].filter(k=>SC[k]&&k!=='perm');
 function nav(){$('nav').innerHTML=allowed().map(k=>`<button class="nav ${k===cur?'on':''}" data-a=go data-id=${k}><i class="fa-solid fa-${SC[k].i}"></i>${SC[k].n}${k==='msgs'&&unread()?` (${unread()})`:''}</button>`).join('')}
 function go(id){if(!allowed().includes(id))return;cur=id;$('scr').innerHTML=SC[id].r();if(SCDS[id])$('scr').insertAdjacentHTML('afterbegin',xbox(SCDS[id]));SC[id].u?.();nav();$('side').classList.remove('open');scrollTo(0,0)}
 function listen(){unsubs.forEach(f=>f());
  const doc_=U.role==='doctor';
- unsubs=Object.keys(D).filter(k=>k!=='messages'&&(k!=='activity_logs'||U.role==='manager'||U.role==='it')&&(!doc_||k==='appointments'||k==='staff'||k==='subscriptions')).map(k=>{const ref=collection(db,k);
+ unsubs=Object.keys(D).filter(k=>k!=='messages'&&(k!=='activity_logs'||U.role==='manager'||U.role==='it')&&(!doc_||k==='appointments'||k==='staff'||k==='subscriptions'||k==='leaves')).map(k=>{const ref=collection(db,k);
   if(k==='reports'){const a={w:[],p:[]},mg=()=>{const m=new Map();[...a.w,...a.p].forEach(x=>m.set(x.id,x));D.reports=[...m.values()];SC[cur]?.u?.()},f=(q,key)=>onSnapshot(q,s=>{a[key]=s.docs.map(d=>({id:d.id,...d.data()}));mg()},e=>console.warn('reports',e.code)),u1=f(query(ref,where('date','>=',since(WIN.reports))),'w'),u2=f(query(ref,where('status','==','pending')),'p');return()=>{u1();u2()}}
-  const src=doc_&&k==='appointments'?query(ref,where('doctor','==',U.name)):k==='appointments'?query(ref,where('date','>=',since(WIN.appointments))):k==='attendance'?query(ref,where('date','>=',since(WIN.attendance))):k==='activity_logs'?query(ref,orderBy('createdAt','desc'),limit(500)):ref;
+  const src=doc_&&k==='appointments'?query(ref,where('doctor','==',U.name)):k==='appointments'?query(ref,where('date','>=',since(WIN.appointments))):k==='attendance'?query(ref,where('date','>=',since(WIN.attendance))):k==='activity_logs'?query(ref,orderBy('createdAt','desc'),limit(500)):k==='leaves'&&U.role!=='manager'&&U.role!=='it'?query(ref,where('uid','==',U.uid)):ref;
   return onSnapshot(src,s=>{D[k]=s.docs.map(d=>({id:d.id,...d.data()}));SC[cur]?.u?.()},e=>console.warn(k,e.code))});
  unsubs.push(onSnapshot(doc(db,'settings','role_permissions'),s=>{PERM=s.exists()?s.data():null;nav();if(!allowed().includes(cur))go(allowed()[0])},()=>{}));
  unsubs.push(onSnapshot(doc(db,'settings','finance'),s=>{FIN=s.exists()?s.data():{};SC[cur]?.u?.()},()=>{}),onSnapshot(doc(db,'settings','reminder'),s=>{REM=s.exists()?s.data().text:null},()=>{}));
+ const nn={u:[],r:[],a:[]},ng=()=>{const m=new Map();[...nn.u,...nn.r,...nn.a].forEach(x=>m.set(x.id,x));NS.list=[...m.values()].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));notifRender()},
+  nq=(q,k)=>{let first=true;return onSnapshot(q,s=>{nn[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(!first)s.docChanges().forEach(c=>{const x=c.doc.data();if(c.type==='added'&&Date.parse(x.createdAt)>NS.seen&&x.by!==U.name)toast('🔔 '+x.title,1)});first=false;ng()},e=>console.warn('notif',e.code))};
+ NS.key='khatwa_nseen_'+U.uid;if(ls(NS.key)==null)ls(NS.key,String(Date.now()));NS.seen=+ls(NS.key)||0;
+ unsubs.push(nq(query(collection(db,'notifications'),where('toUid','==',U.uid)),'u'),nq(query(collection(db,'notifications'),where('toRole','==',U.role)),'r'),nq(query(collection(db,'notifications'),where('toRole','==','all')),'a'));
  const mm={to:[],from:[]},mg=()=>{const m=new Map();[...mm.to,...mm.from].forEach(x=>m.set(x.id,x));D.messages=[...m.values()];nav();SC[cur]?.u?.()},mq=(f,v,k)=>onSnapshot(query(collection(db,'messages'),where(f,'==',v)),q=>{mm[k]=q.docs.map(d=>({id:d.id,...d.data()}));mg()},e=>console.warn('messages',e.code));
  unsubs.push(mq('toRole',U.role,'to'),mq('fromUid',U.uid,'from'))}
 
@@ -505,6 +534,7 @@ const A={
   if(!child)return toast('اجلب بيانات الطفل أولاً',0);if(!doctor||!date)return toast('اختر الأخصائي والتاريخ',0);
   if(date<today())return toast('لا يمكن الحجز بتاريخ سابق',0);
   if(D.appointments.some(a=>a.doctor===doctor&&a.date===date&&a.time===time&&a.status!=='no_show'))return toast('الأخصائي محجوز في هذا الوقت',0);
+  if(D.off_days.some(o=>o.doctor===doctor&&o.date===date))return toast('الأخصائي في إجازة في هذا التاريخ',0);
   const act=D.appointments.filter(a=>a.fileNo===child.fileNo&&(a.date||a.day)===date&&a.status!=='no_show');
   if(act.some(a=>t24(a.time)===t24(time)))return toast('للطفل موعد آخر في نفس الوقت',0);
   if(act.some(a=>svcKey(a.service)===svcKey(val('bs'))))return toast('للطفل موعد في نفس التخصص في هذا اليوم',0);
@@ -690,6 +720,25 @@ const A={
   const now=new Date().toISOString();
   if(await run((async()=>{const b=writeBatch(db);b.set(doc(collection(db,'subscriptions')),{fileNo:child.fileNo,childName:child.name,parentUid:child.parentUid||'',packageId:p.id,packageName:p.name,total:+p.sessions,used:0,status:'active',date:today(),by:U.name,createdAt:now});
    b.set(doc(collection(db,'invoices')),{client:`${child.name} (${child.fileNo})`,service:'اشتراك: '+p.name,amount:+p.price,method:val('spm'),date:today(),by:U.name,createdAt:now});await b.commit()})(),'تم الاشتراك وإصدار السند')){child=null;$('sfno').value='';$('sfc').innerHTML=''}},
+ async sendleave(){const f=val('lf'),to=val('lto')||f,k=val('lt'),vac=k.startsWith('إجازة');
+  if(!f||!val('lr'))return toast('أدخل التاريخ والسبب',0);if(to<f)return toast('تاريخ النهاية قبل البداية',0);if(f<today())return toast('لا يمكن الطلب بتاريخ سابق',0);
+  if(vac&&(new Date(to)-new Date(f))/864e5>30)return toast('الإجازة في الطلب الواحد لا تتجاوز 31 يوماً',0);
+  if(!vac&&(!val('lh1')||!val('lh2')))return toast('حدد ساعات الاستئذان',0);
+  const now=new Date().toISOString();
+  if(await run((async()=>{const b=writeBatch(db);
+   b.set(doc(collection(db,'leaves')),{uid:U.uid,name:U.name,role:U.role,type:vac?'إجازة':'استئذان',from:f,to,h1:val('lh1'),h2:val('lh2'),reason:val('lr'),status:'pending',createdAt:now});
+   b.set(doc(collection(db,'notifications')),{toUid:'',toRole:'manager',kind:'leave',title:'طلب استئذان جديد',body:`${U.name} (${RL[U.role]||''}): ${vac?'إجازة':'استئذان'} ${f}${to!==f?' إلى '+to:''}`,by:U.name,createdAt:now});
+   await b.commit()})(),'أُرسل الطلب للمدير'))['lf','lto','lh1','lh2','lr'].forEach(i=>{$(i).value=''})},
+ lvok:id=>A.lvdecide(id,true),lvno:id=>A.lvdecide(id,false),
+ async lvdecide(id,ok){const x=D.leaves.find(l=>l.id===id);if(!x||x.status!=='pending')return;
+  if(!await ask((ok?'الموافقة على طلب ':'رفض طلب ')+x.name+'؟',ok?'موافقة':'رفض'))return;
+  const now=new Date().toISOString(),b=writeBatch(db);
+  b.update(doc(db,'leaves',id),{status:ok?'approved':'rejected',managerNote:'',decidedBy:U.name,decidedAt:now});
+  if(ok&&x.type==='إجازة'){const ds=[];for(let d=new Date(x.from+'T00:00:00');d<=new Date(x.to+'T00:00:00')&&ds.length<32;d.setDate(d.getDate()+1))ds.push(d.toLocaleDateString('en-CA'));
+   ds.forEach(d=>b.set(doc(db,'off_days',(x.name+'_'+d).replace(/[\/\s]+/g,'-')),{doctor:x.name,date:d,leaveId:id,createdAt:now}))}
+  b.set(doc(collection(db,'notifications')),{toUid:x.uid,toRole:'',kind:'leave',title:ok?'تمت الموافقة على طلبك':'تم رفض طلبك',body:`${x.type} ${x.from}${x.to!==x.from?' إلى '+x.to:''}`,by:U.name,createdAt:now});
+  run(b.commit(),ok?'تمت الموافقة وأُرسل تنبيه للموظف':'تم الرفض وأُرسل تنبيه للموظف')},
+ sendnotif(){const t=val('ntt'),b=val('ntb');if(!t||!b)return toast('أدخل العنوان والنص',0);run(addDoc(collection(db,'notifications'),{toUid:'',toRole:val('nt'),kind:'system',title:t,body:b,by:U.name,createdAt:new Date().toISOString()}),'أُرسل الإشعار').then(()=>{$('ntt').value='';$('ntb').value=''})},
  sendmsg(){const b=val('mbody');if(!b)return toast('اكتب الرسالة',0);run(addDoc(collection(db,'messages'),{fromUid:U.uid,fromName:U.name,fromRole:U.role,toRole:val('mto'),subject:val('msub'),body:b,read:false,createdAt:new Date().toISOString()}),'أُرسلت الرسالة').then(()=>{$('mbody').value='';$('msub').value=''})},
  mtab(v){mtab=v;SC.msgs.u()},rd:id=>sub('messages',id,{read:true}),
  async restore(v){const[c,id]=v.split(':');if(!await run(updateDoc(doc(db,c,id),{archived:false}),'استُعيد من الأرشيف'))return;
