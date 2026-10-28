@@ -124,6 +124,15 @@ html[dir=ltr] #side{right:auto;left:0;border-left:0;border-right:1px solid var(-
 #login .lgh,#auth-screen .lgh{background:radial-gradient(circle at 10% 34%,#fde68a55 0 26px,transparent 27px),radial-gradient(circle at 90% 20%,#fdba7466 0 20px,transparent 21px),radial-gradient(circle at 78% 72%,#a7f3d055 0 16px,transparent 17px),linear-gradient(135deg,#0369a1,#0891b2)!important}
 .child-avatar-placeholder i{animation:lgBounce 2.6s ease-in-out infinite!important}
 @media (prefers-reduced-motion:reduce){.fp{animation:none;opacity:.5}#login .lo i,#auth-screen .lo i,.child-avatar-placeholder i{animation:none!important}}
+@media print{
+html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+#idc .idcard,#idc .idcard *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;animation:none!important;transition:none!important}
+#idc .idh{background-position:0 0,0% 50%!important}
+#idc .ecg0{opacity:1!important}
+#idc .ecg1{stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important}
+#idc .idbeat{transform:none!important}
+#idc .idph{box-shadow:none!important}
+}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script></head><body>
 <div id="toasts"></div>
 <div id="login"><div class="lg">
@@ -434,7 +443,7 @@ function qrFoot(p){const k=vkey(p);if(!k||typeof qrcode==='undefined')return '';
 function cardHtml(p){const exp=p.expiry||'',days=exp?Math.ceil((new Date(exp+'T00:00:00')-new Date())/864e5):null,
  stt=days==null?{c:'#64748b',t:'تاريخ الانتهاء غير مسجّل',e:'EXPIRY NOT SET'}:days<0?{c:'#e11d48',t:'منتهية منذ '+exp,e:'EXPIRED'}:days<30?{c:'#d97706',t:'تنتهي قريباً '+exp,e:'EXPIRES SOON'}:{c:'#16a34a',t:'سارية حتى '+exp,e:'VALID'},
  w='M0 14H40L46 14L50 4L56 22L61 9L65 14H110L116 14L120 3L126 22L131 8L135 14H204';
- return `<div class="idcard"><div class="idh">${HOSP.logo?`<img src="${E(HOSP.logo)}" alt="">`:'<i class="fa-solid fa-child-reaching"></i>'}<b>${E(HOSP.name||'اسم المركز')}</b><small><i class="fa-solid fa-shoe-prints idbeat"></i> بطاقة عمل · STAFF ID</small><svg class="ecg" viewBox="0 0 400 34" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g class="fp" style="--i:0" transform="translate(30 9) rotate(10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:1" transform="translate(78 17) rotate(-10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:2" transform="translate(126 9) rotate(10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:3" transform="translate(174 17) rotate(-10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:4" transform="translate(222 9) rotate(10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:5" transform="translate(270 17) rotate(-10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:6" transform="translate(318 9) rotate(10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g><g class="fp" style="--i:7" transform="translate(366 17) rotate(-10)"><ellipse rx="4.2" ry="6.5"/><ellipse cy="9.5" rx="3" ry="3"/></g></svg></div>
+ return `<div class="idcard"><div class="idh">${HOSP.logo?`<img src="${E(HOSP.logo)}" alt="">`:'<i class="fa-solid fa-child-reaching"></i>'}<b>مركز خطوة جديدة المتكاملة للتأهيل</b><small><i class="fa-solid fa-heart-pulse idbeat"></i> بطاقة عمل · STAFF ID</small><svg class="ecg" viewBox="0 0 204 28" preserveAspectRatio="none" aria-hidden="true"><path class="ecg0" d="${w}"/><path class="ecg1" d="${w}"/></svg></div>
  <div class="idph">${p.photo?`<img src="${E(p.photo)}" alt="">`:'<i class="fa-solid fa-user"></i>'}</div>
  <div class="idn">${E(p.name||'—')}</div><div class="idt">${E(p.role||p.title||'')}</div>
  <div class="idr"><span>الهوية / الإقامة · ID</span><b>${E(p.idno||'—')}</b></div>
