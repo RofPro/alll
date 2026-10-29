@@ -127,7 +127,9 @@ html[dir=ltr] #side{right:auto;left:0;border-left:0;border-right:1px solid var(-
 @media print{
 html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 #idc .idcard,#idc .idcard *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;animation:none!important;transition:none!important}
-#idc .idh{background-position:0 0,0% 50%!important}
+#idc .idh{background:#0284c7 linear-gradient(135deg,#0284c7,#0d9488)!important;background-size:100% 100%!important;background-position:0 0!important}
+#idc .idcard::before,#idc .idcard::after,#idc .idh::before,#idc .idh::after{display:none!important}
+#idc .idcard{background:#f8fbff!important}
 #idc .ecg0{opacity:1!important}
 #idc .ecg1{stroke-dasharray:none!important;stroke-dashoffset:0!important;opacity:1!important}
 #idc .idbeat{transform:none!important}
@@ -157,7 +159,7 @@ html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!im
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import{getAuth,reauthenticateWithCredential,EmailAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import{getAuth,deleteUser,reauthenticateWithCredential,EmailAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import{getFirestore,collection,addDoc,deleteDoc,doc,updateDoc,setDoc,getDoc,onSnapshot,writeBatch,query,where,getDocs,orderBy,limit}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 const CFG={apiKey:"AIzaSyCnpbMGZCteZ9w_i5Rx0sKynle_qz0p2tk",authDomain:"mrkzalalgaltbay.firebaseapp.com",projectId:"mrkzalalgaltbay",storageBucket:"mrkzalalgaltbay.firebasestorage.app",messagingSenderId:"345480027808",appId:"1:345480027808:web:b8ca2b27761d3b912733c5"};const app=initializeApp(CFG);const sec=getAuth(initializeApp(CFG,'sec'));
 const auth=getAuth(app),db=getFirestore(app);
@@ -555,7 +557,7 @@ subs:{n:'الاشتراك في الباقات',i:'ticket',r:()=>{child=null;retu
  if(!$('tb'))return;$('tb').innerHTML=T(['الملف','الطفل','الباقة','الجلسات','المتبقي','الحالة'],[...D.subscriptions].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).map(x=>[V(x.fileNo),V(x.childName),V(x.packageName),`${x.used}/${x.total}`,x.total-x.used,`<span class=tg>${x.status==='active'?'فعّال':'منتهي'}</span>`]))}},
 msgs:{n:'المراسلات',i:'envelope',r:()=>`<div class=card style="max-width:640px"><h3>رسالة جديدة</h3>${S('mto','إلى',[['reception','الاستقبال'],['manager','المدير'],['it','قسم IT'],['accountant','المحاسبة'],['hr','الموارد البشرية'],['store','المخزون'],['service','خدمة العملاء'],['doctor','الأطباء']])}${I('msub','الموضوع')}<label>الرسالة<textarea id=mbody rows=3></textarea></label><small>المرسل يُحدَّد تلقائياً من حسابك.</small><br><button class=b data-a=sendmsg>إرسال</button></div><div class=card>${B('mtab','in','الوارد')}${B('mtab','out','المرسل','o')}<div id=tb style="margin-top:10px"></div></div>`,u(){if(!$('tb'))return;const inb=mtab==='in',tm=x=>V((x.createdAt||'').slice(0,16).replace('T',' '));
  const r=D.messages.filter(x=>inb?x.toRole===U.role:x.fromUid===U.uid).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
- $('tb').innerHTML=T(inb?['من','الموضوع','الرسالة','التاريخ','إجراء']:['إلى','الموضوع','الرسالة','التاريخ','الحالة'],r.map(x=>inb?[`${V(x.fromName)} <small>(${E(RL[x.fromRole]||'')})</small>`,V(x.subject),V(x.body),tm(x),x.read?'مقروءة':B('rd',x.id,'تم الاطلاع','gr')]:[V(RL[x.toRole]),V(x.subject),V(x.body),tm(x),x.read?'قُرئت':'لم تُقرأ']),'لا توجد رسائل')}},
+ $('tb').innerHTML=T(inb?['من','الموضوع','الرسالة','التاريخ','إجراء']:['إلى','الموضوع','الرسالة','التاريخ','الحالة'],r.map(x=>inb?[`${V(x.fromName)} <small>(${E(RL[x.fromRole]||'')})</small>`,V(x.subject),V(x.body),tm(x),(x.fromRole==='parent'&&x.parentUid?B('reply',x.id,'رد على ولي الأمر')+' ':'')+(x.read?'مقروءة':B('rd',x.id,'تم الاطلاع','gr'))]:[V(RL[x.toRole]),V(x.subject),V(x.body),tm(x),x.read?'قُرئت':'لم تُقرأ']),'لا توجد رسائل')}},
 logs:{n:'سجل العمليات',i:'clock-rotate-left',r:()=>`<div class=card><h3>سجل العمليات</h3>${U.role==='it'?`<div style="margin-bottom:8px">${B('clrlogs','','تصفير السجل (IT)','r')} <small style="color:var(--g)">عمليات الـ IT لا تُسجَّل في هذا السجل.</small></div>`:''}<div class=g2>${I('lq','بحث (الاسم، العملية، الطفل)')}${S('lf','الدور',[['','الكل'],...Object.entries(RL)])}</div><div id=tb></div></div>`,u(){if(!$('tb'))return;const q=val('lq').toLowerCase(),f=val('lf');
  const r=D.activity_logs.filter(x=>(!f||x.byRole===f)&&(!q||[x.byName,x.action,x.details,x.screen].some(v=>String(v||'').toLowerCase().includes(q)))).slice(0,300);
  $('tb').innerHTML=T(['التاريخ','المستخدم','الدور','العملية','التفاصيل','الشاشة'],r.map(x=>[V(fdt(x.createdAt)),V(x.byName),V(RL[x.byRole]),V(x.action),V(x.details),V(x.screen)]),'لا توجد عمليات')}},
@@ -639,8 +641,10 @@ function listen(){unsubs.forEach(f=>f());
   nq=(q,k)=>{let first=true;return onSnapshot(q,s=>{nn[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(!first)s.docChanges().forEach(c=>{const x=c.doc.data();if(c.type==='added'&&Date.parse(x.createdAt)>NS.seen&&x.by!==U.name)toast('🔔 '+x.title,1)});first=false;ng()},e=>console.warn('notif',e.code))};
  NS.key='khatwa_nseen_'+U.uid;if(ls(NS.key)==null)ls(NS.key,String(Date.now()));NS.seen=+ls(NS.key)||0;
  unsubs.push(nq(query(collection(db,'notifications'),where('toUid','==',U.uid)),'u'),nq(query(collection(db,'notifications'),where('toRole','==',U.role)),'r'),nq(query(collection(db,'notifications'),where('toRole','==','all')),'a'));
- const mm={to:[],from:[]},mg=()=>{const m=new Map();[...mm.to,...mm.from].forEach(x=>m.set(x.id,x));D.messages=[...m.values()];nav();SC[cur]?.u?.()},mq=(f,v,k)=>onSnapshot(query(collection(db,'messages'),where(f,'==',v)),q=>{mm[k]=q.docs.map(d=>({id:d.id,...d.data()}));mg()},e=>console.warn('messages',e.code));
- unsubs.push(mq('toRole',U.role,'to'),mq('fromUid',U.uid,'from'))}
+ const mm={to:[],to2:[],from:[]},mg=()=>{const m=new Map();[...mm.to,...mm.to2,...mm.from].forEach(x=>m.set(x.id,x));D.messages=[...m.values()];nav();SC[cur]?.u?.()},mq=(qr,k)=>onSnapshot(qr,q=>{mm[k]=q.docs.map(d=>({id:d.id,...d.data()}));mg()},e=>console.warn('messages',e.code)),MC=collection(db,'messages');
+ if(U.role==='doctor')unsubs.push(mq(query(MC,where('toRole','==','doctor'),where('toName','==',U.name)),'to'),mq(query(MC,where('toRole','==','doctor'),where('toName','==','')),'to2'));
+ else unsubs.push(mq(query(MC,where('toRole','==',U.role)),'to'));
+ unsubs.push(mq(query(MC,where('fromUid','==',U.uid)),'from'))}
 
 onAuthStateChanged(auth,async u=>{
  if(!u){unsubs.forEach(f=>f());unsubs=[];$('app').classList.add('hidden');$('login').classList.remove('hidden');showLogin();return}
@@ -880,8 +884,11 @@ const A={
   b.set(doc(collection(db,'notifications')),{toUid:x.uid,toRole:'',kind:'leave',title:ok?'تمت الموافقة على طلبك':'تم رفض طلبك',body:`${x.type} ${x.from}${x.to!==x.from?' إلى '+x.to:''}`,by:U.name,createdAt:now});
   run(b.commit(),ok?'تمت الموافقة وأُرسل تنبيه للموظف':'تم الرفض وأُرسل تنبيه للموظف')},
  sendnotif(){const t=val('ntt'),b=val('ntb');if(!t||!b)return toast('أدخل العنوان والنص',0);run(addDoc(collection(db,'notifications'),{toUid:'',toRole:val('nt'),kind:'system',title:t,body:b,by:U.name,createdAt:new Date().toISOString()}),'أُرسل الإشعار').then(()=>{$('ntt').value='';$('ntb').value=''})},
- sendmsg(){const b=val('mbody');if(!b)return toast('اكتب الرسالة',0);run(addDoc(collection(db,'messages'),{fromUid:U.uid,fromName:U.name,fromRole:U.role,toRole:val('mto'),subject:val('msub'),body:b,read:false,createdAt:new Date().toISOString()}),'أُرسلت الرسالة').then(()=>{$('mbody').value='';$('msub').value=''})},
- mtab(v){mtab=v;SC.msgs.u()},rd:id=>sub('messages',id,{read:true}),
+ sendmsg(){const b=val('mbody');if(!b)return toast('اكتب الرسالة',0);run(addDoc(collection(db,'messages'),{fromUid:U.uid,fromName:U.name,fromRole:U.role,toRole:val('mto'),toName:'',subject:val('msub'),body:b,read:false,createdAt:new Date().toISOString()}),'أُرسلت الرسالة').then(()=>{$('mbody').value='';$('msub').value=''})},
+ mtab(v){mtab=v;SC.msgs.u()},
+ async reply(id){const x=D.messages.find(m=>m.id===id);if(!x||!x.parentUid)return;const t=String(await askVal('اكتب ردك على '+(x.fromName||'ولي الأمر'))||'').trim();if(!t)return;
+  const ok=await run(addDoc(collection(db,'messages'),{fromUid:U.uid,fromName:U.name,fromRole:U.role,toRole:'parent',toName:'',parentUid:x.parentUid,doctor:x.doctor||(U.role==='doctor'?U.name:''),childName:x.childName||'',fileNo:x.fileNo||'',subject:'رد: '+(x.subject||''),body:t.slice(0,700),read:false,createdAt:new Date().toISOString()}),'أُرسل الرد لولي الأمر');
+  if(ok)run(updateDoc(doc(db,'messages',id),{read:true}))},rd:id=>sub('messages',id,{read:true}),
  async restore(v){const[c,id]=v.split(':');if(!await run(updateDoc(doc(db,c,id),{archived:false}),'استُعيد من الأرشيف'))return;
   if(c==='staff'){const s=D.staff.find(x=>x.id===id);D.users.filter(u=>u.role!=='parent'&&u.disabled&&(u.staffId?u.staffId===id:s&&u.name===s.name)).forEach(u=>updateDoc(doc(db,'users',u.id),{disabled:false}).catch(()=>toast('تعذر تفعيل حساب الدخول',0)))}},
  xl(){if(SCDS[cur])return A.xexp(SCDS[cur]);const t=document.querySelector('#tb table');if(!t)return toast('لا يوجد جدول للتصدير في هذه الشاشة',0);const c=t.cloneNode(true);c.querySelectorAll('button').forEach(b=>b.remove());
@@ -900,7 +907,7 @@ const A={
  async delstaff(id){const s=D.staff.find(x=>x.id===id);if(!s)return;if(D.appointments.some(a=>a.doctor===s.name&&a.status==='pending'))return toast('للأخصائي مواعيد قائمة',0);
   if(!await ask(`أرشفة ${s.name}؟ سيتوقف حساب دخوله إن وُجد، ويمكن استعادته من الأرشيف.`,'أرشفة'))return;
   if(!await run(updateDoc(doc(db,'staff',id),{archived:true,archivedBy:U.name,archivedAt:new Date().toISOString()}),'أُرشف الموظف'))return;
-  const us=D.users.filter(u=>u.role!=='parent'&&u.id!==U.uid&&(u.staffId?u.staffId===id:u.name===s.name));
+  const us=D.users.filter(u=>u.role!=='parent'&&u.id!==U.uid&&(u.staffId?u.staffId===id:u.name===s.name));if(s.uid&&s.uid!==U.uid&&!us.some(u=>u.id===s.uid))us.push({id:s.uid});
   try{await Promise.all(us.map(u=>updateDoc(doc(db,'users',u.id),{disabled:true})))}catch(e){toast('أُرشف الموظف لكن تعذر إيقاف حساب دخوله، أوقفه من مستخدمو النظام',0)}},
  grp(id){GOPEN=GOPEN===id?'__':id;ls('khatwa_gopen',GOPEN);nav()},snew(){window._smode='staff';sOpen('')},dnew(){window._smode='doctor';sOpen('')},sedit(id){sOpen(id)},
  sv(id){const s=D.staff.find(x=>x.id===id);if(!s)return;const p=D.payroll.find(x=>x.id===id)||{};
@@ -908,23 +915,32 @@ const A={
   $('dlg').innerHTML=`<h3>${E(s.name)} <small style="color:var(--g)">${V(s.empNo)}</small></h3>${s.photo?`<img src="${E(s.photo)}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;margin-bottom:8px">`:''}<div class=ov><table>${rows.map(([a,b])=>`<tr><th>${a}</th><td style="white-space:normal">${b}</td></tr>`).join('')}</table></div><div style="margin-top:8px">${B('sdoc',id+':id','صورة الهوية','o')}${B('sdoc',id+':iqama','صورة الإقامة','o')}${B('sdoc',id+':other','مرفق آخر','o')}</div><div id=sdv></div>${B('sedit',id,'تعديل','gr')}${B('close','','إغلاق','o')}`;$('dlg').showModal()},
  async sdoc(v){const[i,k]=v.split(':');try{const d=await getDoc(doc(db,'staff_docs',i+'_'+k));if(!d.exists())return toast('لا يوجد مرفق',0);$('sdv').innerHTML=`<img src="${E(d.data().data)}" style="max-width:100%;border-radius:9px;margin-top:8px">`}catch(e){toast('تعذر فتح المرفق: '+(e.code||e.message),0)}},
  async ssave(id){const g=k=>val(k),nm=g('fn'),dept=g('fdept'),spec=g('ftit'),jt=g('fjt');
-  if(!nm)return toast('أدخل الاسم',0);if(dept==='doctor'&&!spec)return toast('اختر اختصاص الأخصائي',0);
+  if(!nm)return toast('أدخل الاسم',0);
+  const ph=g('fph'),fid=g('fid'),old=id?(D.staff.find(x=>x.id===id)||{}):{},oldp=id?(D.payroll.find(x=>x.id===id)||{}):{},renamed=!!(id&&old.name&&old.name!==nm);
+  if(ph&&!/^05\d{8}$/.test(ph))return toast('الجوال يجب أن يكون 10 أرقام ويبدأ بـ 05',0);
+  if(fid&&!/^\d{10}$/.test(fid))return toast('رقم الهوية / الإقامة يجب أن يكون 10 أرقام',0);
+  if(D.staff.some(x=>x.id!==id&&!x.archived&&String(x.name||'').trim()===nm.trim()))return toast('يوجد موظف بنفس الاسم، أضف ما يميّزه (مثل اسم الأب)',0);
+  if(renamed&&old.dept==='doctor'&&!['manager','it'].includes(U.role))return toast('تغيير اسم الأطباء من المدير فقط',0);
+  if(renamed&&D.appointments.some(a=>a.doctor===old.name))return toast('لا يمكن تغيير اسم أخصائي لديه مواعيد. أرشفه وأضف ملفاً جديداً.',0);if(dept==='doctor'&&!spec)return toast('اختر اختصاص الأخصائي',0);
   const un=id?'':g('fun'),pw=id?'':$('fpw').value.trim();
-  if(un||pw){if(dept==='other')return toast('قسم "أخرى" بدون حساب دخول',0);if(!/^[A-Za-z0-9._-]{3,30}$/.test(un))return toast('اسم المستخدم: حروف إنجليزية وأرقام (3 إلى 30)',0);if(pw.length<6)return toast('كلمة المرور 6 أحرف على الأقل',0);
+  if(un||pw){if(dept==='other')return toast('قسم "أخرى" بدون حساب دخول',0);if(!/^[A-Za-z0-9._-]{3,30}$/.test(un))return toast('اسم المستخدم: حروف إنجليزية وأرقام (3 إلى 30)',0);if(pw.length<6)return toast('كلمة المرور 6 أحرف على الأقل',0);if((dept==='manager'||dept==='it')&&U.role!=='it')return toast('حسابات المدير والـ IT يُنشئها مسؤول النظام فقط',0);
    if(D.users.some(x=>String(x.username||'').toLowerCase()===un.toLowerCase())||D.moms_users.some(x=>String(x.username||'').toLowerCase()===un.toLowerCase()))return toast('اسم المستخدم مستخدم',0)}
   let photo=null;const docs=[];
   try{const f=$('fimg').files[0];if(f)photo=await imgData(f,256,.8);
    for(const[k,kind]of[['fd_id','id'],['fd_iqama','iqama'],['fd_other','other']]){const f2=$(k).files[0];if(f2){const d=await imgData(f2,1100,.7);if(d.length>900000)throw new Error('size');docs.push([kind,d])}}}
   catch(e){return toast('تعذر معالجة الصورة، جرّب صورة أصغر',0)}
   let uid=null;
-  if(un){try{const c=await createUserWithEmailAndPassword(sec,un.toLowerCase()+'@khatwa.app',pw);uid=c.user.uid;await signOut(sec)}catch(e){return toast(e.code==='auth/email-already-in-use'?'اسم المستخدم مستخدم':'تعذر إنشاء الحساب: '+(e.code||e.message),0)}}
+  if(un){try{const c=await createUserWithEmailAndPassword(sec,un.toLowerCase()+'@khatwa.app',pw);uid=c.user.uid}catch(e){return toast(e.code==='auth/email-already-in-use'?'اسم المستخدم مستخدم':'تعذر إنشاء الحساب: '+(e.code||e.message),0)}}
   LC=nm;const now=new Date().toISOString(),num=k=>parseFloat(g(k))||0,ref=id?doc(db,'staff',id):doc(collection(db,'staff'));
   const st={name:nm,dept,spec,jobTitle:jt,title:spec||jt||DL[dept],branch:g('fbr'),phone:g('fph'),joinDate:g('fjd')||today()};
-  if(photo)st.photo=photo;if(!id){st.empNo='EMP-'+rnd(4,'0123456789');st.status='مستمر'}
+  if(uid)st.uid=uid;if(photo)st.photo=photo;if(!id){st.empNo='EMP-'+rnd(4,'0123456789');st.status='مستمر'}
   const pay={by:U.name,at:now};PAYMAP.forEach(([k,f])=>pay[f]=['salary','housing','transport','other'].includes(f)?num(k):g(k));
   const ok=await run((async()=>{const b=writeBatch(db);b.set(ref,st,{merge:true});b.set(doc(db,'payroll',ref.id),pay,{merge:true});
+   if(fid&&fid!==oldp.idNo)b.set(doc(db,'id_numbers',fid),{staffId:ref.id,by:U.uid,at:now});
+   if(renamed)[...new Set([old.uid,...D.users.filter(u=>u.staffId===id).map(u=>u.id)].filter(Boolean))].forEach(u=>b.update(doc(db,'users',u),{name:nm}));
    docs.forEach(([k,d])=>b.set(doc(db,'staff_docs',ref.id+'_'+k),{staffId:ref.id,kind:k,data:d,at:now,by:U.name}));
-   if(uid)b.set(doc(db,'users',uid),{role:dept,name:nm,username:un,staffId:ref.id,createdAt:now,createdBy:U.name});await b.commit()})(),'تم حفظ ملف الموظف');
+   if(uid)b.set(doc(db,'users',uid),{role:dept,name:nm,username:un,staffId:ref.id,createdAt:now,createdBy:U.name});await b.commit()})().catch(e=>{throw e.code==='permission-denied'?{code:'تعذر الحفظ: رقم الهوية مسجل لشخص آخر أو لا تملك الصلاحية'}:e}),'تم حفظ ملف الموظف');
+  if(!ok&&uid){try{await deleteUser(sec.currentUser)}catch(_){}}try{await signOut(sec)}catch(_){}
   if(!ok)return;if(!uid)return A.close();
   $('dlg').className='';$('dlg').innerHTML=`<h3>تم إنشاء الموظف وحساب الدخول</h3><div class=card dir=ltr style="text-align:left">Username: <b>${E(un)}</b><br>Password: <b>${E(pw)}</b></div><p class=mu>سجّل البيانات الآن، كلمة المرور لا تُحفظ.</p>${B('close','','إغلاق','o')}`},
  async saveP(){const r=val('pr'),p=[...document.querySelectorAll('#pc input:checked')].map(c=>c.value);
